@@ -6,7 +6,7 @@ export const profile = {
   role: 'Desarrollador Backend Junior',
   location: 'Madrid, España',
   summary:
-    'Ingeniero en Sistemas de Información orientado al desarrollo backend. Siete meses de experiencia en Acciona escribiendo código Java para automatización de pruebas, integrando suites en pipelines CI/CD con Jenkins y monitorizando aplicaciones en AWS. He desarrollado servicios en Python que integran APIs REST y diseñado y optimizado bases de datos PostgreSQL y MySQL.',
+    'Graduado en Ingeniería en Sistemas de Información por la Universidad de Alcalá, orientado al desarrollo backend. Durante 7 meses de prácticas en Acciona automaticé pruebas de regresión en Java (Appium, Cucumber) ejecutadas desde Jenkins, apoyé la monitorización de microservicios en AWS y trabajé con Git y Jira junto a equipos externos. En proyectos académicos y personales he programado en Python, Java y JavaScript (Node.js), he desarrollado APIs REST y he trabajado con bases de datos relacionales (PostgreSQL, MySQL).',
   email: 'pesquinascordero@gmail.com',
   phone: '+34 619 635 262',
   linkedin: 'https://www.linkedin.com/in/pablo-esquinas-cordero',
