@@ -10,7 +10,7 @@ export const profile = {
   email: 'pesquinascordero@gmail.com',
   phone: '+34 619 635 262',
   linkedin: 'https://www.linkedin.com/in/pablo-esquinas-cordero',
-  github: 'https://github.com/pesquinascordero',
+  github: 'https://github.com/pesquinascordero-it',
 }
 
 export const highlightedStack = [
