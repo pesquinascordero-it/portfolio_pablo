@@ -1,40 +1,54 @@
 export interface Project {
   slug: string
   title: string
-  type: 'Académico' | 'Personal' | 'UAH'
+  type: 'Personal' | 'Académico'
   description: string
   tags: string[]
+  github?: string
+  demo?: string
 }
 
 export const projects: Project[] = [
   {
-    slug: 'gestion-de-tareas',
-    title: 'Aplicación web de gestión de tareas',
-    type: 'Académico',
+    slug: 'api-rest-entradas',
+    title: 'API REST de venta de entradas',
+    type: 'Personal',
     description:
-      'Lógica de negocio en Java (Servlets) con arquitectura cliente-servidor desplegada en GlassFish, e interfaz en HTML, CSS y JavaScript.',
-    tags: ['Java', 'Servlets', 'GlassFish', 'JavaScript'],
+      'API REST con Spring Boot (JSON, POST/GET, códigos HTTP 201/409) que demuestra la inyección de dependencias y los ciclos de vida de los beans (singleton, request, prototype). Control de concurrencia para evitar la sobreventa, verificado con 20 compras simultáneas.',
+    tags: ['Java', 'Spring Boot', 'Maven'],
+    github: 'https://github.com/pesquinascordero-it',
   },
   {
-    slug: 'bases-de-datos',
-    title: 'Diseño y optimización de bases de datos',
+    slug: 'api-rest-biblioteca',
+    title: 'API REST de biblioteca',
+    type: 'Personal',
+    description:
+      'API REST en Node.js para gestionar los libros de una biblioteca: crear, consultar, editar y borrar. Con filtros, búsqueda, ordenación, paginación y validación de datos, conectada a una página web. Desplegada en un VPS Linux con Caddy (HTTPS), systemd y un script de despliegue en Bash.',
+    tags: ['JavaScript', 'Node.js', 'HTML', 'CSS'],
+    github: 'https://github.com/pesquinascordero-it',
+    demo: 'https://biblioteca.pabloesquinas.es',
+  },
+  {
+    slug: 'tfg-genomica',
+    title: 'TFG: Machine Learning para identificar la vía ALT en datos genómicos tumorales',
     type: 'Académico',
     description:
-      'Modelado del esquema relacional, definición de tablas e índices y optimización de consultas SQL.',
-    tags: ['PostgreSQL', 'MySQL', 'SQL'],
+      'Analicé con Python datos clínicos y genómicos de 4.535 pacientes y comparé distintos modelos de Machine Learning para predecir la actividad ALT en tumores.',
+    tags: ['Python', 'pandas', 'scikit-learn', 'ML'],
+    github: 'https://github.com/pesquinascordero-it',
   },
   {
     slug: 'escaner-iot',
     title: 'Escáner de exposición IoT',
-    type: 'Personal',
+    type: 'Académico',
     description:
-      'Servicio que consulta la API de Shodan, clasifica el riesgo de dispositivos expuestos con un modelo de ML y notifica los resultados por bot de Telegram. Incluye un honeypot que registra conexiones y un dashboard.',
+      'Servicio en Python que consulta la API de Shodan, clasifica el riesgo de dispositivos IoT expuestos con un modelo de ML y notifica por Telegram; incluye honeypot y dashboard.',
     tags: ['Python', 'Shodan API', 'Telegram Bot API', 'ML'],
   },
   {
     slug: 'rastreador-wallets',
     title: 'Rastreador forense de wallets blockchain',
-    type: 'Personal',
+    type: 'Académico',
     description:
       'Servicio que integra APIs on-chain en tiempo real para rastrear wallets sospechosas en varias blockchains y generar informes forenses automáticos.',
     tags: ['Python', 'APIs on-chain', 'Telegram Bot API'],
@@ -42,17 +56,9 @@ export const projects: Project[] = [
   {
     slug: 'crawler-dark-web',
     title: 'Crawler de Dark Web con alertas',
-    type: 'Personal',
+    type: 'Académico',
     description:
-      'Crawler que enruta el tráfico por Tor, extrae dominios .onion con expresiones regulares y envía alertas automáticas al móvil.',
-    tags: ['Python', 'Tor', 'Regex', 'Telegram Bot API'],
-  },
-  {
-    slug: 'tfg-genomica',
-    title: 'TFG: Machine Learning para identificar la vía ALT en datos genómicos tumorales',
-    type: 'UAH',
-    description:
-      'Modelos de clasificación en Python (pandas, scikit-learn) sobre datos genómicos de tumores para la detección precoz del cáncer.',
-    tags: ['Python', 'pandas', 'scikit-learn', 'ML'],
+      'Crawler que enruta tráfico por Tor, extrae dominios .onion con regex y envía alertas automáticas al móvil.',
+    tags: ['Python', 'Tor', 'regex', 'Telegram Bot API'],
   },
 ]

@@ -7,11 +7,50 @@
 .cv-header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
   padding-bottom: 8px;
+}
 
-  h2 {
-    margin: 0;
+.cv-name {
+  font: 600 1.8rem/1.2 var(--heading);
+  color: var(--text-h);
+  margin: 0;
+}
+
+.cv-role {
+  font: 500 1rem/1 var(--mono);
+  color: var(--neon-cyan);
+  margin: 0;
+}
+
+.cv-location-header {
+  font: 14px/1.4 var(--mono);
+  color: var(--text);
+  margin: 0;
+
+  a {
+    color: var(--neon-cyan);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.cv-links {
+  font: 13px/1.4 var(--mono);
+  color: var(--text);
+  margin: 0;
+  word-break: break-all;
+
+  a {
+    color: var(--neon-cyan);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 
@@ -20,6 +59,26 @@
   line-height: 1.7;
   max-width: 720px;
   margin: 8px 0 0;
+}
+
+.cv-profile-text {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 0;
+}
+
+.cv-languages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+
+  p {
+    margin: 0;
+    font: 1rem/1.4 var(--sans);
+    color: var(--text);
+  }
 }
 
 .cv-download {
@@ -132,6 +191,47 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 12px;
+}
+
+.cv-project-description {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text);
+  margin: 8px 0 12px;
+}
+
+.cv-project-tags {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  li {
+    font: 12px/1 var(--mono);
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+  }
+}
+
+.cv-project-links {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+
+  a {
+    font: 13px/1 var(--mono);
+    color: var(--neon-cyan);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 @media (max-width: 640px) {

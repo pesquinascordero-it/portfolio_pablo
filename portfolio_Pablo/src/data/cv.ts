@@ -25,28 +25,28 @@ export const highlightedStack = [
 ]
 
 export const skills = [
-  { category: 'Lenguajes', items: ['Java', 'Python', 'SQL (T-SQL)', 'JavaScript', 'Node.js', 'C++'] },
-  { category: 'Backend y APIs', items: ['Java EE (Servlets)', 'GlassFish', 'Node.js', 'APIs REST', 'Telegram Bot API'] },
-  { category: 'Bases de datos', items: ['PostgreSQL', 'MySQL', 'MariaDB', 'Modelado relacional', 'Índices y optimización de consultas'] },
-  { category: 'Cloud y DevOps', items: ['AWS', 'Jenkins (CI/CD)', 'Git', 'GitLab', 'Dynatrace', 'Jira'] },
-  { category: 'Testing', items: ['Appium', 'Cucumber (BDD)', 'BrowserStack', 'Pruebas de regresión', 'Pruebas de carga'] },
+  { category: 'Lenguajes', items: ['Java', 'Python', 'SQL', 'JavaScript', 'C++'] },
+  { category: 'Backend y APIs', items: ['Spring Boot', 'API REST', 'Java EE (Servlets)', 'GlassFish', 'Node.js'] },
+  { category: 'Bases de datos', items: ['PostgreSQL', 'MySQL'] },
+  { category: 'Cloud y DevOps', items: ['AWS', 'Jenkins (CI/CD)', 'Git', 'GitLab', 'Dynatrace', 'Linux', 'Caddy'] },
+  { category: 'Testing', items: ['Appium', 'Cucumber', 'BrowserStack', 'pruebas funcionales', 'de regresión y de carga'] },
   { category: 'Frontend y móvil', items: ['React', 'Ionic', 'HTML', 'CSS'] },
-  { category: 'Fundamentos', items: ['POO', 'Programación funcional', 'Estructuras de datos y algoritmos', 'Seguridad informática'] },
+  { category: 'Fundamentos', items: ['POO', 'programación funcional', 'estructuras de datos y algoritmos'] },
+  { category: 'Organización', items: ['Jira', 'Confluence'] },
 ]
 
 export const experience = [
   {
-    role: 'Desarrollador en prácticas',
+    role: 'Prácticas en QA y Desarrollo de Software',
     company: 'Acciona Tecnología y Servicios',
     type: 'Prácticas',
     period: 'Sep 2025 – Mar 2026',
-    location: 'Madrid',
+    location: 'Madrid · Apps de reserva de puestos y parking (web, Android, iOS)',
     bullets: [
-      'Desarrollé en Java escenarios de prueba automatizados E2E con Appium y Cucumber (BDD) para aplicaciones iOS/Android, ejecutados en BrowserStack.',
-      'Integré la suite de pruebas en pipelines CI/CD de Jenkins para su ejecución automática en cada build, reduciendo la regresión manual.',
-      'Monitoricé el rendimiento y la disponibilidad de aplicaciones desplegadas en AWS con Dynatrace.',
-      'Gestioné el empaquetado y la publicación de versiones de apps móviles en App Store y Applivery, con control de versiones en Git/GitLab y seguimiento en Jira.',
-      'Desarrollé funcionalidades en React e Ionic.',
+      'Automaticé pruebas de regresión en Java con Appium y Cucumber, ejecutadas mediante Jenkins y BrowserStack.',
+      'Monitoricé microservicios en AWS, detectando incidencias en picos de demanda y comunicándolas al equipo responsable.',
+      'Diseñé y ejecuté casos de prueba y regresiones en Jira, añadiendo logs en Java para diagnosticar fallos.',
+      'Realicé cambios en el frontend (React, Ionic) mediante pull request en Git y publiqué versiones en App Store y Applivery.',
     ],
   },
 ]
