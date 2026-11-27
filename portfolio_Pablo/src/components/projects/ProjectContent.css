@@ -1,0 +1,249 @@
+.project-content {
+  flex: 1;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--text);
+}
+
+/* Headings */
+.project-content h2 {
+  scroll-margin-top: 100px; /* Espacio para navbar fija */
+  margin-top: 48px;
+  margin-bottom: 24px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.project-content h2:first-child {
+  margin-top: 0;
+}
+
+.project-content h3 {
+  scroll-margin-top: 100px;
+  margin-top: 32px;
+  margin-bottom: 16px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+/* Párrafos */
+.project-content p {
+  margin: 0 0 16px;
+}
+
+/* Código inline */
+.project-content .inline-code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  color: var(--neon-yellow);
+  background: var(--surface-2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* Bloques de código */
+.project-content pre {
+  position: relative;
+  margin: 24px 0;
+  padding: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.6;
+
+  /* Scrollbar personalizada */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.project-content pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+.project-content pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.project-content pre::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.project-content pre::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-cyan);
+}
+
+.project-content code {
+  font-family: var(--mono);
+  color: var(--text);
+}
+
+/* Resaltado de sintaxis (highlight.js) */
+.hljs-string {
+  color: #a3be8c; /* Green */
+}
+
+.hljs-number,
+.hljs-literal {
+  color: #b48ead; /* Purple */
+}
+
+.hljs-attr {
+  color: #81a1c1; /* Blue */
+}
+
+.hljs-title,
+.hljs-function {
+  color: #88c0d0; /* Cyan */
+}
+
+.hljs-keyword {
+  color: #81a1c1; /* Blue */
+  font-weight: 500;
+}
+
+.hljs-comment {
+  color: #616e88; /* Gray - iterálica */
+  font-style: italic;
+}
+
+.hljs-built_in {
+  color: #d08770; /* Orange */
+}
+
+.hljs-variable {
+  color: #d8dee9; /* Light text */
+}
+
+/* Listas */
+.project-content ul,
+.project-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.project-content li {
+  margin: 8px 0;
+}
+
+/* Enlaces */
+.project-content a {
+  color: var(--neon-cyan);
+  text-decoration: underline;
+  text-decoration-color: rgba(99, 102, 241, 0.3);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s;
+}
+
+.project-content a:hover {
+  text-decoration-color: var(--neon-cyan);
+}
+
+/* Negritas e itálicas */
+.project-content strong {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.project-content em {
+  font-style: italic;
+  color: var(--neon-pink);
+}
+
+/* Tablas */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 24px 0;
+}
+
+.project-content table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.project-content thead {
+  background: var(--surface-2);
+}
+
+.project-content th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-h);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.project-content th:last-child {
+  border-right: none;
+}
+
+.project-content td {
+  padding: 12px 16px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.project-content td:last-child {
+  border-right: none;
+}
+
+.project-content tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.project-content tbody tr:hover {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+/* Blockquotes (si aparecen) */
+.project-content blockquote {
+  margin: 24px 0;
+  padding: 16px 24px;
+  border-left: 4px solid var(--neon-cyan);
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 4px;
+  color: var(--text);
+  font-style: italic;
+}
+
+.project-content blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .project-content {
+    font-size: 1rem;
+  }
+
+  .project-content h2 {
+    margin-top: 36px;
+    font-size: 1.5rem;
+  }
+
+  .project-content h3 {
+    margin-top: 24px;
+    font-size: 1.1rem;
+  }
+
+  .project-content pre {
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .project-content a {
+    transition: none;
+  }
+}

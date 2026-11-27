@@ -1,5 +1,4 @@
 import { profile, skills, experience, education, languages } from '../data/cv'
-import { projects } from '../data/projects'
 import './Cv.css'
 
 function Cv() {
@@ -66,26 +65,6 @@ function Cv() {
         </div>
       </section>
 
-      <section className="cv-section">
-        <h3>Proyectos</h3>
-        {projects.map((project) => (
-          <div key={project.slug} className="cv-job">
-            <h4>{project.title} — {project.type}</h4>
-            <p className="cv-project-description">{project.description}</p>
-            <ul className="cv-project-tags">
-              {project.tags.map((tag) => (
-                <li key={tag}>{tag}</li>
-              ))}
-            </ul>
-            {(project.github || project.demo) && (
-              <div className="cv-project-links">
-                {project.github && <a href={project.github} target="_blank" rel="noopener noreferrer">GitHub</a>}
-                {project.demo && <a href={project.demo} target="_blank" rel="noopener noreferrer">Demo</a>}
-              </div>
-            )}
-          </div>
-        ))}
-      </section>
 
     </article>
   )

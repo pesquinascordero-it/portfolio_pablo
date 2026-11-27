@@ -1,0 +1,171 @@
+.project-toc {
+  position: sticky;
+  top: 80px; /* Altura navbar + un poco de padding */
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+
+  /* Thin vertical line on the left */
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+  margin-left: 16px;
+}
+
+.project-toc-summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  user-select: none;
+  padding: 8px 0;
+  transition: color 0.2s;
+}
+
+.project-toc-summary:hover {
+  color: var(--text-h);
+}
+
+/* Rotación del triángulo al abrir */
+details[open] > .project-toc-summary {
+  /* El ▼ ya apunta hacia abajo; no necesita rotación */
+}
+
+.project-toc-nav {
+  margin-top: 12px;
+}
+
+.project-toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-toc-item {
+  margin: 0;
+}
+
+.project-toc-link {
+  display: block;
+  font: 14px/1.4 var(--sans);
+  color: var(--text);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-left: 2px solid transparent;
+  margin-left: -18px; /* Align con el border del TOC */
+  padding-left: 16px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.project-toc-link:hover {
+  color: var(--text-h);
+}
+
+/* Activo: texto + línea izquierda en color de acento */
+.project-toc-link.active {
+  color: var(--neon-cyan);
+  border-left-color: var(--neon-cyan);
+  font-weight: 500;
+}
+
+.project-toc-sublist {
+  list-style: none;
+  padding: 0;
+  margin: 4px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.project-toc-subitem {
+  margin: 0;
+}
+
+.project-toc-sublink {
+  display: block;
+  font: 13px/1.4 var(--sans);
+  color: var(--text);
+  text-decoration: none;
+  padding: 2px 8px;
+  margin-left: 8px; /* Sangría para h3 */
+  padding-left: 8px;
+  border-left: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.project-toc-sublink:hover {
+  color: var(--text-h);
+}
+
+.project-toc-sublink.active {
+  color: var(--neon-cyan);
+  border-left-color: var(--neon-cyan);
+  font-weight: 500;
+}
+
+/* Mobile: TOC plegado por defecto, aparece arriba del contenido */
+@media (max-width: 1024px) {
+  .project-toc {
+    position: relative;
+    top: auto;
+    max-height: none;
+    margin: 0 0 24px 0;
+    padding-left: 0;
+    padding: 0;
+    border-left: none;
+  }
+
+  .project-toc-summary {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  .project-toc-summary:hover {
+    background: var(--surface-2);
+  }
+
+  .project-toc-nav {
+    margin-top: 0;
+    display: none;
+  }
+
+  details[open] > .project-toc-nav {
+    display: block;
+    margin-top: 12px;
+    padding-left: 12px;
+    border-left: 1px solid var(--border);
+  }
+
+  .project-toc-link,
+  .project-toc-sublink {
+    margin-left: 0;
+    padding-left: 8px;
+    border-left: 2px solid transparent;
+  }
+}
+
+/* Scrollable list styling para browsers que lo necesiten */
+.project-toc::-webkit-scrollbar {
+  width: 6px;
+}
+
+.project-toc::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.project-toc::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.project-toc::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-cyan);
+}
