@@ -1,4 +1,6 @@
 import { profile, skills, experience, education, languages } from '../data/cv'
+import { projects } from '../data/projects'
+import { Link } from 'react-router'
 import './Cv.css'
 
 function Cv() {
@@ -45,6 +47,38 @@ function Cv() {
                 <li key={bullet}>{bullet}</li>
               ))}
             </ul>
+          </div>
+        ))}
+      </section>
+
+      <section className="cv-section">
+        <h3>Proyectos</h3>
+        {projects.map((project) => (
+          <div key={project.slug} className="cv-job">
+            <h4>
+              <Link to={`/proyectos/${project.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                {project.title}
+              </Link>
+            </h4>
+            <p className="cv-meta">{project.category}</p>
+            <p className="cv-project-description">{project.summary}</p>
+            <ul className="cv-project-tags">
+              {project.tools.map((tool) => (
+                <li key={tool}>{tool}</li>
+              ))}
+            </ul>
+            <div className="cv-project-links">
+              {project.repo && (
+                <a href={project.repo} target="_blank" rel="noopener noreferrer">
+                  GitHub
+                </a>
+              )}
+              {project.demo && (
+                <a href={project.demo} target="_blank" rel="noopener noreferrer">
+                  Demo
+                </a>
+              )}
+            </div>
           </div>
         ))}
       </section>

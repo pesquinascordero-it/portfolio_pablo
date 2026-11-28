@@ -112,6 +112,7 @@
   overflow: hidden;
   transition: border-color 0.2s;
   position: relative;
+  isolation: isolate;
 
   &:hover {
     border-color: var(--neon-cyan);
@@ -176,7 +177,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
-  z-index: 10;
+  z-index: 1;
 }
 
 .project-card-title {

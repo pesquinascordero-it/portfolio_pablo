@@ -45,7 +45,7 @@ Detecta inyecciones como `Bcc: spam@example.com` en el asunto bloqueando saltos 
 **Rate limit**: 5 envíos cada 15 minutos por IP. `express-rate-limit` con cabeceras estándar draft-7.
 
 **Seguridad HTTP**:
-- JSON body limitado a 10 KB
+- Cuerpo JSON limitado a 10 KB
 - Los errores de SMTP no se muestran al cliente
 - `x-powered-by` desactivado
 - `trust proxy` para leer la IP real detrás de Caddy
@@ -80,14 +80,13 @@ El servicio systemd `portfolio-api` carga las variables de entorno desde un fich
 
 ## 5. Aprendizajes
 
-- **Markdown en frontend**: Lazy loading con `react-markdown` reduce el tamaño inicial sin cargar contenido innecesario.
+- **Markdown en frontend**: Cargo el contenido Markdown con `React.lazy`, así Home, CV y Contacto no descargan esa parte.
 - **Validación en servidor**: Nunca confiar en el cliente. Detectar inyección de cabeceras antes de enviar correos es crítico.
 - **Scroll spy**: En mi caso, `getBoundingClientRect()` con un listener de scroll funcionó mejor que IntersectionObserver para resaltar el apartado activo.
 - **Rate limit en memoria**: `express-rate-limit` guarda los contadores en memoria: es sencillo, pero se reinicia al reiniciar el servicio y no se comparte entre instancias.
-- **Honeypot silencioso**: Responder OK al bot sin enviar nada evita que sepa que ha sido detectado.
 
 ## 6. Mejoras futuras
 
-- Automatizar el despliegue con GitHub Actions (eliminar manualidad, garantizar consistencia).
+- Automatizar el despliegue con GitHub Actions.
 - Tests del frontend con Vitest y Testing Library.
 - Despliegue sin cortes para actualizar la API sin interrumpir visitantes.

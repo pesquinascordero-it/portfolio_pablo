@@ -45,8 +45,7 @@ export const projects: Project[] = [
     date: '2026-11-26',
     category: 'Full Stack',
     tools: ['React', 'TypeScript', 'Vite', 'Node.js', 'Express', 'Nodemailer', 'Caddy'],
-    summary: 'La web que estás viendo: frontend en React y una API propia para el formulario de contacto, en mi servidor.',
-    demo: 'https://pabloesquinas.es',
+    summary: 'Frontend en React y TypeScript, con una API de contacto protegida contra spam y desplegada en un VPS con Caddy.',
     repo: 'https://github.com/pesquinascordero-it/portfolio_pablo',
   },
 ]
