@@ -1,8 +1,9 @@
-import { Suspense, lazy, useState } from 'react'
+import { Suspense, lazy, useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router'
 import { projects } from '../data/projects'
 import { getProjectMarkdown } from '../utils/loadMarkdown'
 import { useScrollSpy, type HeadingNode } from '../hooks/useScrollSpy'
+import { ProjectNavigation } from '../components/projects/ProjectNavigation'
 import NotFound from './NotFound'
 import './ProjectDetail.css'
 
@@ -15,6 +16,11 @@ function ProjectDetail() {
   const project = projects.find((p) => p.slug === slug)
   const [headings, setHeadings] = useState<HeadingNode[]>([])
   const activeId = useScrollSpy(headings)
+
+  // Scroll a arriba cuando cambia el proyecto
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [slug])
 
   if (!project) {
     return <NotFound />
@@ -88,6 +94,8 @@ function ProjectDetail() {
           <ProjectToc headings={headings} activeId={activeId} />
         </Suspense>
       </div>
+
+      <ProjectNavigation currentSlug={slug!} />
     </article>
   )
 }

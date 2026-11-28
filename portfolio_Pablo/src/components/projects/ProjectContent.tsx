@@ -48,21 +48,16 @@ export function ProjectContent({ markdown, onHeadingsExtracted }: ProjectContent
           h3: ({ node, children, ...props }) => (
             <h3 id={slugify(String(children))} {...props} />
           ),
-          code: (props: any) => {
-            const { node, inline, className, children, ...rest } = props
-            const language = className?.replace(/language-/, '') ?? 'plaintext'
-            return inline ? (
-              <code className="inline-code" {...rest}>
-                {children}
-              </code>
-            ) : (
-              <pre className={`code-block language-${language}`}>
-                <code className={className} {...rest}>
-                  {children}
-                </code>
-              </pre>
-            )
-          },
+          code: ({ node, className, children, ...props }) => (
+            <code className={className ? undefined : 'inline-code'} {...props}>
+              {children}
+            </code>
+          ),
+          pre: ({ node, children, ...props }) => (
+            <pre className="code-block" {...props}>
+              {children}
+            </pre>
+          ),
           table: ({ node, ...props }) => (
             <div className="table-wrapper">
               <table {...props} />
