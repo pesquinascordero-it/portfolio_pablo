@@ -13,6 +13,7 @@
 }
 
 .project-toc-summary {
+  list-style: none;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 500;
@@ -20,6 +21,10 @@
   user-select: none;
   padding: 8px 0;
   transition: color 0.2s;
+}
+
+.project-toc-summary::-webkit-details-marker {
+  display: none;
 }
 
 .project-toc-summary:hover {
@@ -58,6 +63,7 @@ details[open] > .project-toc-summary {
   margin-left: -18px; /* Align con el border del TOC */
   padding-left: 16px;
   transition: color 0.2s, border-color 0.2s;
+  word-break: break-word;
 }
 
 .project-toc-link:hover {
@@ -94,6 +100,7 @@ details[open] > .project-toc-summary {
   padding-left: 8px;
   border-left: 2px solid transparent;
   transition: color 0.2s, border-color 0.2s;
+  word-break: break-word;
 }
 
 .project-toc-sublink:hover {

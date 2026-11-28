@@ -4,7 +4,7 @@ export interface Project {
   date: string // "11 de abril de 2026" o formato ISO "2026-04-11" para parsear
   category: string // UNA palabra: será el badge de la tarjeta
   tools: string[] // herramientas, alimenta los chips de filtro
-  summary: string // 1-3 frases para la tarjeta
+  summary: string // Máx 120 caracteres, una sola frase terminada en punto
   cover?: string // ruta a la imagen (ej: "/projects/api-go.jpg"), opcional
   repo?: string // enlace al repo GitHub
   demo?: string // enlace a la demo
@@ -17,36 +17,36 @@ export const projects: Project[] = [
     date: '2026-11-25',
     category: 'Backend',
     tools: ['Node.js', 'HTML', 'CSS', 'JavaScript', 'Caddy', 'systemd', 'Bash'],
-    summary: 'API REST sin frameworks para gestión de biblioteca. CRUD completo, filtros, búsqueda, ordenación, paginación y validación. Desplegada en VPS con Caddy y systemd.',
+    summary: 'Hecha en Node.js sin frameworks para gestionar libros, con página web propia y desplegada en mi servidor Linux.',
     demo: 'https://biblioteca.pabloesquinas.es',
     repo: 'https://github.com/pesquinascordero-it/biblioteca-api',
   },
   {
     slug: 'tfg-machine-learning-alt',
     title: 'TFG Machine Learning ALT',
-    date: 'TODO: fecha exacta',
-    category: 'ML',
-    tools: ['Python', 'pandas', 'scikit-learn', 'XGBoost', 'LightGBM', 'SHAP', 'TabPFN'],
-    summary: 'Predicción de actividad ALT en datos oncológicos (4.535 pacientes). 7 modelos ML optimizados con análisis SHAP y ranking de genes.',
-    repo: 'TODO: enlace repo',
+    date: '2026-11-25',
+    category: 'Machine Learning',
+    tools: ['Python', 'pandas', 'scikit-learn', 'XGBoost', 'LightGBM', 'Optuna', 'SHAP', 'TabPFN'],
+    summary: 'Comparo modelos de regresión para predecir la actividad ALT en tumores a partir de datos de 4.535 pacientes.',
+    repo: 'https://github.com/pesquinascordero-it/tfg-machine-learning-alt',
   },
   {
     slug: 'venta-entradas-spring',
     title: 'API REST Venta de Entradas',
-    date: 'TODO: fecha exacta',
+    date: '2026-10-30',
     category: 'Backend',
     tools: ['Java', 'Spring Boot', 'Maven'],
-    summary: 'API con inyección de dependencias y ciclos de vida de beans. Control de concurrencia verificado con 20 compras simultáneas, evita sobreventa.',
-    repo: 'TODO: enlace repo',
+    summary: 'Practico inyección de dependencias y ámbitos de beans en Spring, y evito la sobreventa de entradas con synchronized.',
+    repo: 'https://github.com/pesquinascordero-it/venta-entradas-spring',
   },
   {
     slug: 'portfolio-personal',
     title: 'Portfolio Personal',
-    date: 'TODO: fecha exacta',
+    date: '2026-11-26',
     category: 'Full Stack',
-    tools: ['React', 'TypeScript', 'Vite', 'Node.js', 'Linux', 'VPS'],
-    summary: 'Este portafolio. Frontend moderno en React, backend con formulario de contacto, despliegue automatizado en VPS con Caddy.',
+    tools: ['React', 'TypeScript', 'Vite', 'Node.js', 'Express', 'Nodemailer', 'Caddy'],
+    summary: 'La web que estás viendo: frontend en React y una API propia para el formulario de contacto, en mi servidor.',
     demo: 'https://pabloesquinas.es',
-    repo: 'TODO: enlace repo',
+    repo: 'https://github.com/pesquinascordero-it/portfolio_pablo',
   },
 ]

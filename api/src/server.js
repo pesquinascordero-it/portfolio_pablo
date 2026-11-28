@@ -10,7 +10,7 @@ const app = createApp({
   corsOrigin: config.corsOrigin,
 })
 
-// Escucha solo en local: nginx es quien recibe el tráfico público y lo reenvía aquí.
+// Escucha solo en local: Caddy es quien recibe el tráfico público y lo reenvía aquí.
 app.listen(config.port, '127.0.0.1', () => {
   console.log(`API escuchando en 127.0.0.1:${config.port}`)
 })

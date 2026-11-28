@@ -1,72 +1,102 @@
-## 1. Qué es
+## 1. Descripción
 
-Predecir niveles de ALT (alanina aminotransferasa) en 4.535 pacientes oncológicos para anticipar toxicidad hepática y personalizar tratamientos. Es mi TFG de ingeniería de datos: un reto real que combina machine learning con interpretabilidad en contexto médico.
+TFG de Ingeniería en Sistemas de Información por la Universidad de Alcalá. Análisis con Machine Learning para predecir la actividad de la vía **ALT** (*Alternative Lengthening of Telomeres* — alargamiento alternativo de telómeros) a partir de datos clínicos y genómicos de pacientes con cáncer.
 
-**Stack**: Python, pandas, scikit-learn, XGBoost, LightGBM, TabPFN, SHAP.
+Los datos pertenecen a Hartwig Medical Foundation / ICGC y tienen acceso controlado. No se incluyen en el repositorio por razones de privacidad, pero los notebooks contienen el código del análisis y las notas con los resultados.
 
-### 1.1 Por qué lo hice
+### 1.1 Objetivo
 
-La toxicidad hepática es una complicación grave en tratamientos oncológicos. Un modelo que predice ALT elevado permite adelantarse a los problemas. La clave: no vale solo precisión, necesito explicar por qué el modelo predice lo que predice.
+Identificar qué variables —tipo de tumor, mutaciones en genes driver, y tratamientos recibidos— se asocian con la actividad ALT, y comparar distintos modelos de regresión para predecir la **tasa de fusiones teloméricas** en tumor y sangre periférica.
 
-## 2. Dataset y preprocesamiento
+## 2. Datos y preparación
 
-Trabajo con 4.535 registros de pacientes. Cada uno tiene 50+ características clínicas (edad, comorbilidades, dosis de tratamiento) y demográficas. La variable objetivo es ALT, continua, en unidades de enzima hepática.
+**4.535 pacientes** del archivo de metadatos (nulos categóricos convertidos a 'Sin_dato'). El conjunto de entrenamiento es 80 % (aproximadamente 3.600 pacientes).
 
-**Pipeline**: 
-- Exploración: distribuciones asimétricas, correlaciones entre variables, detección de outliers con rango intercuartil (IQR).
-- Limpieza: eliminar valores faltantes en la variable objetivo, rellenar ausencias numéricas con mediana, remover outliers extremos.
-- Escalado: StandardScaler para algoritmos sensibles a escala (Lasso, Ridge, SVM).
-- Selección: SelectKBest automático para elegir las 15 características más predictivas.
+### 2.1 Target
 
-## 3. Modelos evaluados
+Columna principal: `Tumor_Telomere fusion rate (Gt-end/coverage*purity)`. Se aplica transformación **log1p** (logaritmo natural de 1 + valor) para estabilizar varianza.
 
-Probé 7 modelos distintos para entender trade-offs entre precisión, velocidad e interpretabilidad.
+**Umbral ALT-positivo**: pacientes con tasa de fusiones > 0,2 → **338 pacientes**.
 
-| Modelo | Tipo | Ventaja | Desventaja |
-|--------|------|---------|-----------|
-| Lasso | Regresión lineal L1 | Interpretable, coeficientes claros | Menos flexible |
-| Ridge | Regresión lineal L2 | Estable con multicolinealidad | Igual de lineal |
-| Random Forest | Ensemble árboles | Robusta, importancia de features | Black box puro |
-| **XGBoost** | Gradient boosting | Precisión y velocidad | Más lento que LGB |
-| **LightGBM** | Gradient boosting | Muy rápido, buena precisión | A veces overfitting |
-| TabPFN | Prior-fitted network | Sin tuning de parámetros | Experimental, lento |
-| Hurdle | Dos etapas | Modela ceros y valores reales | Complejo de interpretar |
+### 2.2 Variables
 
-## 4. Interpretabilidad con SHAP
+Después de seleccionar características con baja tasa de nulos:
 
-SHAP (SHapley Additive exPlanations) calcula cuánto cada variable contribuye a cada predicción, basado en teoría de juegos. Para cada observación, obtengo un valor que explica por qué el modelo predijo lo que predijo.
+- **Tipo de tumor**: `cancer_type` y `Mixed_def` (58 columnas tras one-hot encoding); origen mesenquimal, derivado del tipo de tumor.
+- **Mutaciones en genes driver**: un flag binario por gen, solo genes con ≥ 10 pacientes en el dataset.
+- **Tratamientos**: `treatment1`, `treatmentGiven`, `hasSystemicPreTreatment`, `hasRadiotherapyPreTreatment`.
+- **Respuesta al tratamiento**: `firstResponse`.
+- **Sitio de biopsia**: `biopsySite`.
+
+### 2.3 Preparación
+
+Se eliminaron columnas con más del 50 % de nulos. Los nulos categóricos se convirtieron a 'Sin_dato'; las categorías poco frecuentes se agruparon en 'Otro' (top 15 tratamientos, top 10 lugares de biopsia, top 10 primer tratamiento). Se aplicó one-hot encoding para variables categóricas.
+
+## 3. Modelos y validación
+
+**Metodología**: split 80/20 (`random_state=42`), 5-fold CV (sin estratificación), scoring métrica = R²
+
+| Modelo | Tipo | Propósito |
+|--------|------|----------|
+| Lasso | Regresión L1 | Selecciona variables, pone coeficientes a 0 |
+| Ridge | Regresión L2 | Reparte el peso entre variables correlacionadas |
+| Elastic Net | L1 + L2 | Combina L1 y L2 |
+| Random Forest | Ensemble | Captura relaciones no lineales |
+| XGBoost | Gradient boosting | Captura relaciones no lineales |
+| LightGBM | Gradient boosting | Captura relaciones no lineales |
+| Hurdle | Binario + regresión | Separa si hay fusiones y cuántas |
+| TabPFN | Red pre-entrenada | Modelo preentrenado para datos tabulares |
+
+## 4. Resultados e interpretabilidad
+
+### 4.1 Desempeño por modelo (target: Tumor)
+
+Target principal transformado con log1p:
+
+- **Lasso, alpha 0.001 (03c)**: R² test 0,0846; R² CV 0,0554 ± 0,0282.
+- **Ridge, alpha fijo (03c)**: R² CV 0,0347.
+- **Elastic Net, alpha fijo (03c)**: R² CV 0,0455.
+- **Lasso optimizado con Optuna (03j, alpha 0,004642)**: R² CV 0,0617.
+- **Hurdle (03i, split 80/20 fijo)**: R² 0,0484.
+- **TabPFN (03i, split fijo)**: 0,100; promedio con 5 semillas: 0,085 ± 0,016.
+- **Random Forest, XGBoost y LightGBM**: se probaron en 03b y 03d, también con Optuna; el repo no documenta su R².
+- **Sangre (target: `Blood_Telomere fusion rate`, notebook 03h)**: Lasso R² CV 0,0531.
+
+### 4.2 Optimización con Optuna (notebook 03j)
+
+*`03j_optuna_hyperparams.ipynb`*
 
 ```python
-# src/modeling/interpretability.py
-import shap
-
-explainer = shap.TreeExplainer(xgb_model)
-shap_values = explainer.shap_values(X_test)
-shap.summary_plot(shap_values, X_test, plot_type="bar", max_display=15)
+def objective_lasso(trial):
+    alpha = trial.suggest_float('alpha', 1e-4, 10.0, log=True)
+    pipe  = Pipeline([('scaler', StandardScaler()),
+                      ('model',  Lasso(alpha=alpha, max_iter=10000, random_state=42))])
+    scores = cross_val_score(pipe, X, y, cv=kf, scoring='r2')
+    return scores.mean()
 ```
 
-Genera un ranking de genes predictivos: cuál mueve más la predicción. Crítico en medicina: el hospital necesita saber "¿por qué el modelo dice que este paciente tiene riesgo alto?". Sin SHAP, no hay respuesta.
+Optuna prueba valores de alpha en escala logarítmica (entre 1e-4 y 10.0) y elige el que maximiza el R² medio de la validación cruzada. El escalado StandardScaler dentro del Pipeline evita que información del conjunto de validación filtre hacia el entrenamiento.
 
-## 5. Resultados
+### 4.3 SHAP (notebook 03k)
 
-Estoy finalizando el modelo. Los resultados esperados:
-- R² en test: 0.75+
-- RMSE: 20-30 unidades de ALT
-- Importancia SHAP consistente entre modelos (validación de estabilidad)
-- 3-4 variables dominantes que capturan mayoría de la varianza
+Interpretabilidad del Lasso optimizado usando `shap.LinearExplainer()`. Se generaron gráficos de barras (importancia global), beeswarm (importancia y dirección del efecto de cada variable) y waterfall (explicación individual).
 
-## 6. Qué aprendí
+### 4.4 Mutaciones driver (notebook 04)
 
-- **Feature engineering es 80% del trabajo**: la precisión vive o muere en la preparación de datos, no en el modelo.
-- **SHAP no es opcional**: auditoría regulatoria, publicación científica, aprobación de médicos, todo requiere explicabilidad.
-- **Trade-off constante**: precisión vs velocidad vs interpretabilidad. TabPFN es más lento pero no necesita scaling. XGBoost es más rápido pero requiere tuning.
-- **ML clínico ≠ Kaggle**: datos desbalanceados, valores faltantes reales, validación estratificada obligatoria, reproducibilidad crítica.
-- **Validación cruzada estratificada**: preservar distribución de la variable objetivo en cada fold evita modelos que aprenden el ruido.
+Ranking de genes por tasa media de fusiones (mínimo 10 pacientes en el dataset). El análisis destaca genes relacionados con ALT (ATRX, DAXX), histonas (H3-3A, H3-3B) y proteínas de los telómeros (POT1, TERT).
 
-## 7. Próximos pasos
+Tasa media global de fusiones: 0,107.
 
-- Validación externa: probar en dataset independiente de otro hospital.
-- Publicación: documento científico con resultados y limitaciones.
-- Implementación clínica: integración en sistema de historia electrónica.
-- Monitoreo de drift: datos nuevos pueden cambiar distribuciones; vigilar.
-- Ensemble final con votación ponderada de los 2-3 mejores modelos.
+## 5. Aprendizajes
+
+- **R² bajo (entre 0,05 y 0,10) como resultado legítimo**: las variables disponibles (tipos de tumor, tratamientos, mutaciones en genes driver) explican una fracción pequeña de la variación en la tasa de fusiones teloméricas. Es un hallazgo en sí mismo, no un fallo del modelo.
+- **Optuna mejora respecto a alpha fijo**: el valor optimizado (0,004642) mejora el R² CV de 0,0554 a 0,0617, demostrando la importancia de la búsqueda de hiperparámetros.
+- **Pipeline escalado evita fuga de datos**: colocar StandardScaler dentro del Pipeline garantiza que el escalado se ajusta solo con los datos de entrenamiento de cada partición.
+- **Transformación log1p necesaria**: el target tiene distribución muy asimétrica (muchos ceros, algunos outliers altos); sin transformación, la regresión es inestable.
+- **Hurdle y TabPFN no mejoran al Lasso**: modelos más complejos no superan claramente el Lasso, sugiriendo que la complejidad adicional no está justificada por los datos disponibles.
+
+## 6. Mejoras futuras
+
+- Validación externa con una cohorte independiente para evaluar generalización.
+- Feature engineering: ratios de mutaciones, covariables clínicas adicionales disponibles en la base de datos.
+- Combinaciones de modelos: ensemble simple de múltiples algoritmos.

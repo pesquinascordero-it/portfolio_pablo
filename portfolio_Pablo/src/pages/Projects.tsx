@@ -3,6 +3,15 @@ import { Link, useSearchParams } from 'react-router'
 import { projects } from '../data/projects'
 import './Projects.css'
 
+// Validar sumarios en desarrollo
+if (import.meta.env.DEV) {
+  projects.forEach((p) => {
+    if (p.summary.length > 120) {
+      console.warn(`⚠️ Project summary too long (${p.summary.length} chars): "${p.summary}"`)
+    }
+  })
+}
+
 function Projects() {
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('q') || ''
@@ -129,18 +138,21 @@ function Projects() {
               to={`/proyectos/${project.slug}`}
               className="project-card"
             >
-              {project.cover ? (
-                <img
-                  src={project.cover}
-                  alt={project.title}
-                  className="project-card-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="project-card-placeholder">
-                  <span>{project.tools[0] || 'Proyecto'}</span>
-                </div>
-              )}
+              <div className="project-card-image-wrapper">
+                {project.cover ? (
+                  <img
+                    src={project.cover}
+                    alt={project.title}
+                    className="project-card-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="project-card-placeholder">
+                    <span>{project.tools[0] || 'Proyecto'}</span>
+                  </div>
+                )}
+                <span className="project-card-category">{project.category}</span>
+              </div>
 
               <div className="project-card-body">
                 <div className="project-card-header">
@@ -151,7 +163,6 @@ function Projects() {
                       day: 'numeric',
                     })}
                   </time>
-                  <span className="project-card-category">{project.category}</span>
                 </div>
 
                 <h2 className="project-card-title">{project.title}</h2>

@@ -42,11 +42,12 @@ export function ProjectContent({ markdown, onHeadingsExtracted }: ProjectContent
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
+          h1: () => null, // Oculta el título del proyecto (ya está en la cabecera)
           h2: ({ node, children, ...props }) => (
-            <h2 id={slugify(String(children))} {...props} />
+            <h2 id={slugify(String(children))} {...props}>{children}</h2>
           ),
           h3: ({ node, children, ...props }) => (
-            <h3 id={slugify(String(children))} {...props} />
+            <h3 id={slugify(String(children))} {...props}>{children}</h3>
           ),
           code: ({ node, className, children, ...props }) => (
             <code className={className ? undefined : 'inline-code'} {...props}>

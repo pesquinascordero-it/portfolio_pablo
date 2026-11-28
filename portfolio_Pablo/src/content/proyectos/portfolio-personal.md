@@ -1,69 +1,88 @@
-## 1. Qué es
+## 1. Descripción
 
-Sitio web completo que muestra mis proyectos, CV y formulario de contacto. Es un full stack moderno: frontend React + TypeScript con Vite, backend Node.js Express, y todo desplegado en un VPS Linux con Caddy.
+Portfolio web personal: frontend en React con TypeScript, Vite y React Router, mostrando proyectos con búsqueda y filtros. Backend con Node.js y Express que maneja un formulario de contacto con validación, rate limiting y protección contra inyección de headers SMTP. Desplegado en un VPS Linux con Caddy como proxy inverso y systemd para gestionar el servicio de la API.
 
-**Stack**: React, TypeScript, Vite, Node.js Express, Caddy, systemd.
+### 1.1 Objetivo
 
-### 1.1 Por qué lo hice
+Demostrar habilidades full stack: arquitectura limpia en frontend (lazy loading de contenido Markdown, tabla de contenidos interactiva), API robusta (validación estricta, honeypot, rate limiting sin estado) y despliegue manual pero reproducible en producción.
 
-Quería demostrar cómo se hace un portfolio profesional en 2025: una SPA rápida que renderiza markdown sin necesidad de CMS, con validación completa del formulario de contacto y despliegue automatizado.
+## 2. Funcionalidades
 
-## 2. Características
+- **Home**: Hero con resumen profesional
+- **CV**: Descargable en PDF
+- **Proyectos**: Listado con búsqueda en tiempo real y filtros por herramientas (React, Python, Java…)
+- **Detalle de proyecto**: Markdown renderizado con tabla de contenidos (TOC) lateral, scrollspy y navegación anterior/siguiente
+- **Contacto**: Formulario con envío de email a través de la API
+- **404**: Página de error con enlace de vuelta
 
-- **Inicio**: Hero con animaciones, resumen de proyectos destacados, enlaces a redes.
-- **Proyectos**: Grid responsivo (3 columnas en desktop, 1 en móvil), búsqueda en tiempo real, filtros por herramientas.
-- **CV**: Descargable y visualizable en el navegador.
-- **Detalle de proyecto**: Renderizado Markdown con tabla de contenidos interactiva, resaltado de sintaxis, scroll spy automático.
-- **Contacto**: Validación cliente y servidor, rate limiting (5 mensajes por IP/hora), envío por email con Nodemailer.
+## 3. API del formulario de contacto
 
-Cada proyecto se define en un archivo Markdown que vive en `/content/proyectos/` y se importa en tiempo de compilación.
+El backend valida en el servidor y protege contra abusos:
 
-## 3. Renderizado Markdown en React
+**Validación:**
 
-```typescript
-// src/components/projects/ProjectContent.tsx
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import rehypeHighlight from 'rehype-highlight'
-
-export function ProjectContent({ markdown }) {
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeHighlight]}
-    >
-      {markdown}
-    </ReactMarkdown>
-  )
+```javascript
+// De validate.js: bloquea inyección de headers SMTP
+const hasLineBreaks = (value) => /[\r\n]/.test(value);
+if (hasLineBreaks(name) || hasLineBreaks(subject)) {
+  return { valid: false, errors: { ... } };
 }
+// También: longitudes (name 2-100, subject 3-150, message 10-5000, email max 254) y formato de email
 ```
 
-Los plugins transforman tablas, strikethrough, enlaces y bloques de código. El highlight se aplica automáticamente.
+Rechaza inyecciones como `Bcc: spam@example.com` en el asunto.
+
+**Honeypot**: Campo oculto `website`. Si está relleno, responde con éxito pero no envía nada (atrapa bots).
+
+**Rate limit**: 5 envíos cada 15 minutos por IP. `express-rate-limit` con cabeceras estándar draft-7.
+
+**Seguridad HTTP**:
+- JSON body limitado a 10 KB
+- Errores SMTP ocultos al cliente (evita exposición de credenciales)
+- `x-powered-by` desactivado
+- `trust proxy` para leer la IP real detrás de Caddy
+
+**Endpoint**: `POST /api/contact`. Validación fallida → 400. Rate limit → 429. Fallo SMTP → 500.
+
+**Tests** (7 escenarios): Node.js nativo (`node:test`). Cubre envío válido, validación fallida, inyección de headers, honeypot, error SMTP oculto, JSON malformado, rate limit.
 
 ## 4. Despliegue
 
-La arquitectura es simple: Caddy como reverse proxy, React compilado a archivos estáticos, Node.js para la API de contacto.
+**Arquitectura:**
 
 ```
-pabloesquinas.es
-      │
-    Caddy (HTTPS automático)
-      ├── /api        → Node.js Express en puerto 3000 (systemd)
-      ├── /cv         → archivos estáticos con fallback SPA
-      └── resto       → SPA React compilada (gzip)
+Navegador → Caddy (pabloesquinas.es:443)
+            ├─ Estáticos (index.html, .js, .css)
+            ├─ /api/* → 127.0.0.1:3000 (Express)
+            └─ Rutas → index.html (SPA)
 ```
 
-**Deploy**: Git push → webhook de GitHub → script bash en el servidor:
-1. `git pull` en `/root/portfolio/portfolio_pablo`
-2. `npm run build` para frontend y backend
-3. `systemctl restart portfolio-backend`
-4. Caddy recarga automáticamente
+Caddy maneja HTTPS (Let's Encrypt), redirecciona HTTP → HTTPS y hace reverse proxy de `/api`.
 
-## 5. Qué aprendí
+**Pasos de `deploy.sh`** (manual, ejecutado desde local al servidor):
 
-- SPA con contenido Markdown: Git es el CMS, no necesita base de datos.
-- Vite es un cambio de juego: rebundling de 50ms vs Webpack 2-3s.
-- React Markdown + highlight.js: renderizado seguro sin `dangerouslySetInnerHTML`.
-- Scroll spy con hooks: sintetizar posiciones de headings mientras renderizas.
-- Rate limiting simple en memoria: `Map` de IPs con timestamps, limpiar entries antiguas.
-- Deployment sin downtime: systemd con `Restart=always` + socket activation.
+1. `git pull --ff-only origin main` — actualiza sin merges automáticos
+2. `npm ci` — instala dependencias exactas del frontend
+3. `npm run build` — compila TypeScript + empaqueta con Vite
+4. `rsync --delete dist/ /var/www/html` — despliega estáticos
+5. `npm ci --omit=dev` de la API — instala solo dependencias de producción
+6. `systemctl restart portfolio-api` — reinicia el servicio
+
+El servicio systemd `portfolio-api` carga el `.env` al arrancar y se reinicia automáticamente en caso de fallo.
+
+## 5. Aprendizajes
+
+- **Markdown en frontend**: Lazy loading con `react-markdown` reduce el tamaño inicial y acelera la navegación sin cargar contenido innecesario.
+- **Validación en servidor**: Nunca confiar en el cliente. Detectar inyección de headers antes de enviar correos es crítico.
+- **Scroll spy preciso**: `getBoundingClientRect()` con scroll listener detecta mejor qué heading está visible que `IntersectionObserver`, especialmente en TOC.
+- **Rate limit sin estado**: Basado solo en IP (sin sesiones), simple de implementar y eficaz contra bots en endpoints públicos.
+- **Honeypot silencioso**: Responder "OK" a bots sin enviar nada es más efectivo que rechazar, porque no revela si el sitio está activo.
+
+## 6. Mejoras futuras
+
+- Automatizar el despliegue con GitHub Actions (eliminar manualidad, garantizar consistencia).
+- Tests del frontend (Vitest + Testing Library) para validar componentes en diferentes anchos.
+- Despliegue sin cortes (blue-green deployment) para actualizar la API sin interrumpir visitantes.
+- Monitoreo y métricas (Prometheus + Grafana) para alertar si la API cae o las peticiones se ralentizan.
+- CDN para estáticos (mejora latencia global, especialmente fuera de Europa).
+- Rate limit por usuario autenticado (permitir más envíos a usuarios que se registren, si se agrega autenticación).

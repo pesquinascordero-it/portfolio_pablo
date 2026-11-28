@@ -1,140 +1,90 @@
-## 1. Qué es
+## 1. Descripción
 
-API REST en Java con Spring Boot que gestiona venta de entradas de eventos sin posibilidad de sobreventa. Cuando 20 usuarios compran simultáneamente de 10 entradas disponibles, el sistema vende exactamente 10, nunca 11. Este proyecto explora inyección de dependencias, ciclos de vida de beans, y patrones robustos de control de concurrencia.
+Proyecto de aprendizaje para entender la **inyección de dependencias** y los **ámbitos (scopes) de los beans** en Spring Boot. Implementa una API REST de venta de entradas con gestión en memoria del aforo de un estadio (5 butacas), usando `@Component`, `@RequestScope`, `@Scope("prototype")` y `ObjectProvider`.
 
-**Stack**: Java, Spring Boot, Spring Data JPA, Maven, JUnit, H2 (testing).
+### 1.1 Objetivo
 
-### 1.1 Por qué lo hice
+Practicar cómo Spring gestiona el ciclo de vida de los beans y entender por qué el `synchronized` en una única instancia evita la sobreventa con peticiones simultáneas, siempre que la aplicación corra en un único proceso.
 
-Entender cómo Spring resuelve problemas reales de producción: inyección de dependencias en la práctica, transacciones, y sincronización a nivel base de datos. La concurrencia es uno de los temas menos entendidos y más críticos.
+## 2. Funcionalidades
 
-## 2. Inyección de dependencias
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/compras` | Vende una entrada. Devuelve 201 con id del carrito, id del QR y butacas restantes. Si no hay butacas, devuelve 409 "Entradas agotadas". |
+| `GET` | `/aforo` | Consulta el id del aforo y las butacas libres. |
+| `GET` | `/hola` | Comprobación de que el servidor funciona. |
+| `GET` | `/sin-inyeccion` | Crea objetos con `new` (sin Spring) para comparar con la inyección de dependencias. |
 
-Spring gestiona el ciclo de vida de los objetos automáticamente. Declaro mis servicios con anotaciones y Spring los crea, configura e inyecta donde sea necesario.
+## 3. Inyección de dependencias y ámbitos de los beans
+
+El proyecto usa tres beans con ámbitos distintos:
+
+- **`AforoEstadio`** (`@Scope("singleton")`): una única instancia durante toda la vida de la aplicación. Se comparte entre todas las peticiones HTTP.
+- **`CarritoCompra`** (`@RequestScope`): un carrito nuevo por cada petición HTTP. Se crea cuando llega la petición y se descarta cuando termina.
+- **`GeneradorQR`** (`@Scope("prototype")`): una instancia nueva cada vez que se solicita.
+
+`CompraService` los recibe por constructor para orquestar una compra:
+
+*`CompraService.java`*
 
 ```java
 @Service
-public class TicketService {
-  private final EventRepository eventRepo;
-  
-  // Constructor injection — recomendado, campos inmutables
-  public TicketService(EventRepository eventRepo) {
-    this.eventRepo = eventRepo;
-  }
-  
-  public TicketResponse buyTicket(long eventId, int quantity) {
-    // Lógica aquí
-  }
-}
+public class CompraService {
 
-@Configuration
-public class AppConfig {
-  @Bean
-  public NotificationService notificationService() {
-    return new NotificationService();  // Spring crea instancia única
-  }
-}
-```
+    private final AforoEstadio aforo;
+    private final CarritoCompra carrito;
+    private final ObjectProvider<GeneradorQR> generadorQR;
 
-**Scopes disponibles**: Singleton (una instancia, default), Prototype (nueva cada vez), Request (una por petición HTTP). Elegir bien mejora rendimiento y evita bugs de estado compartido.
-
-## 3. El reto: Evitar sobreventa con concurrencia
-
-**El problema**: Sin sincronización, dos threads pueden leer el mismo stock, decrementarlo, y vender dos entradas cuando solo hay una.
-
-```
-Thread A: Lee stock=1
-Thread B: Lee stock=1
-Thread A: Decrementa → stock=0 ✓
-Thread B: Decrementa → stock=0 ✗ ERROR: sobreventa
-```
-
-**Solución**: Pessimistic Lock a nivel base de datos. Spring Data JPA lo simplifica con anotaciones.
-
-```java
-// EventRepository.java
-@Repository
-public interface EventRepository extends JpaRepository<Event, Long> {
-  
-  @Query("SELECT e FROM Event e WHERE e.id = :id")
-  @Lock(LockModeType.PESSIMISTIC_WRITE)
-  Optional<Event> findByIdForUpdate(@Param("id") long id);
-}
-
-// TicketService.java
-@Service
-public class TicketService {
-  
-  @Transactional
-  public TicketResponse buyTicket(long eventId, int quantity) {
-    Event event = eventRepository.findByIdForUpdate(eventId)
-      .orElseThrow(() -> new EventNotFoundException());
-    
-    if (event.getAvailableTickets() < quantity) {
-      throw new TicketSoldOutException();
+    public CompraService(AforoEstadio aforo, CarritoCompra carrito, ObjectProvider<GeneradorQR> generadorQR) {
+        this.aforo = aforo;
+        this.carrito = carrito;
+        this.generadorQR = generadorQR;
     }
-    
-    event.decrementTickets(quantity);
-    eventRepository.save(event);  // Commit atómico
-    
-    return new TicketResponse(event.getId(), quantity);
-  }
+
+    public RespuestaCompra comprar() {
+        boolean vendida = aforo.venderButaca();
+
+        if (!vendida) {
+            return null;
+        }
+
+        GeneradorQR qr = generadorQR.getObject();
+
+        return new RespuestaCompra("Entrada comprada", aforo.getButacasLibres(), carrito.getId(), qr.getId());
+    }
 }
 ```
 
-**Por qué funciona**: La base de datos bloquea la fila cuando Thread A la lee. Thread B espera. Cuando Thread A termina, Thread B lee el valor actualizado. Concurrencia garantizada, escalable a múltiples servidores.
+En cada petición HTTP: `CompraService` usa el singleton `AforoEstadio` compartido, el carrito de esta petición (inyectado como proxy), y genera un QR único llamando a `generadorQR.getObject()`.
 
-## 4. Otros patrones de concurrencia
+**Proxy versus ObjectProvider**: `CarritoCompra` se inyecta directamente en el singleton gracias a que `@RequestScope` hace que Spring inyecte un proxy, no la instancia real. En cada petición, ese proxy apunta al carrito correcto. `GeneradorQR` (prototype) no tiene proxy: si se inyectara directamente, solo se crearía una vez. Por eso se pide con `ObjectProvider.getObject()`, que crea una nueva en cada llamada.
 
-**Optimistic Locking**: Campo `@Version` auto-incrementado. Si otro thread cambió la fila, lanza excepción. Bueno para baja concurrencia, no bloquea, pero genera reintentos.
+## 4. Evitar la sobreventa
+
+*`AforoEstadio.java`*
 
 ```java
-@Entity
-public class Event {
-  @Version
-  private Long version;  // Spring lo gestiona automáticamente
+public synchronized boolean venderButaca() {
+    if (butacasLibres > 0) {
+        butacasLibres--;
+        return true;
+    }
+    return false;
 }
 ```
 
-**Locks Java (`synchronized`)**: Bloquea toda la app, no escala, evitar en producción.
+`synchronized` garantiza que solo una petición HTTP a la vez ejecute el método. Dos peticiones simultáneas no pueden comprobar `butacasLibres > 0` y decrementarlo de forma independiente: el `if` y la resta son atómicos. Como existe una única instancia de `AforoEstadio`, cualquier compra pasa por el mismo objeto, y el lock es efectivo.
 
-## 5. Testing de concurrencia
+## 5. Aprendizajes
 
-Creo 20 threads que compran simultáneamente de un evento con 10 entradas.
+- **Elegir el ámbito adecuado**: qué estado se comparte (singleton) y cuál es propio de cada petición (request) o de cada uso (prototype).
+- **Proxy frente a ObjectProvider**: para usar beans de ámbito más corto dentro de un singleton, `@RequestScope` usa proxy; `@Scope("prototype")` requiere `ObjectProvider`.
+- **`synchronized` protege dentro de un proceso**: garantiza atomicidad en un servidor único. Con múltiples instancias o servidores, hace falta control a nivel de base de datos.
+- **Códigos HTTP**: `201 Created` para éxito, `409 Conflict` para recurso agotado.
 
-```java
-@Test
-public void testNoOverbooking() throws InterruptedException {
-  ExecutorService executor = Executors.newFixedThreadPool(20);
-  
-  for (int i = 0; i < 20; i++) {
-    executor.submit(() -> {
-      ticketService.buyTicket(eventId, 1);
-    });
-  }
-  
-  executor.shutdown();
-  executor.awaitTermination(10, TimeUnit.SECONDS);
-  
-  Event event = eventRepository.findById(eventId).get();
-  assertEquals(0, event.getAvailableTickets());  // Nunca sobreventa
-}
-```
+## 6. Mejoras futuras
 
-Resultado: Exactamente 10 entradas vendidas, 10 intentos fallidos con excepción `TicketSoldOutException`.
-
-## 6. Qué aprendí
-
-- **DI de Spring es elegancia pura**: Código limpio, fácil de testear, desacoplado. Los tests inyectan mocks sin ceremonias.
-- **Scopes importan**: Singleton es rápido pero comparte estado (cuidado). Prototype es lento pero seguro. Request es el equilibrio en web.
-- **Concurrencia en BD es la solución robusta**: Locks Java funcionan en monohilo. Locks en BD funcionan distribuidos.
-- **Testing de concurrencia es imprescindible**: Bugs de race condition nunca aparecen en tests monohilo.
-- **Pessimistic vs Optimistic**: Pessimistic bloquea (mejor si hay mucha contención). Optimistic reintentos (mejor si hay poca).
-
-## 7. Próximos pasos
-
-- Implementar Optimistic Lock como alternativa y comparar performance.
-- Añadir caché de eventos con invalidación automática.
-- Integrar con sistema de pagos real (Stripe, PayPal).
-- Monitoreo de deadlocks en BD con logs.
-- Load testing con 1000+ threads concurrentes.
+- Guardar el aforo en una base de datos para que persista al reiniciar y funcione en múltiples instancias de la aplicación (usando, por ejemplo, bloqueo pesimista u optimista a nivel de SQL).
+- Añadir un test que lance muchas compras de forma concurrente y verifique que nunca se venden más de 5 entradas.
+- Devolver las butacas restantes en el mismo `venderButaca()` para evitar que dos métodos consecutivos den un número inexacto en caso de compras simultáneas.
+- Usar `Optional<RespuestaCompra>` o una excepción en lugar de devolver `null` cuando se agotan las entradas.

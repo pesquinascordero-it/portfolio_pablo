@@ -3,44 +3,72 @@ import { useEffect, useState } from 'react'
 export interface HeadingNode {
   id: string
   text: string
-  level: 2 | 3 // h2 y h3
-  children?: HeadingNode[] // h3s bajo un h2
+  level: 2 | 3
+  children?: HeadingNode[]
 }
 
 /**
- * Hook que monitoriza el scroll y devuelve el ID del heading visible actualmente.
- * Usa IntersectionObserver para eficiencia.
+ * Hook que monitoriza el scroll y devuelve el ID del heading actualmente visible.
+ * Usa scroll listener con getBoundingClientRect() para seleccionar el elemento
+ * más cercano a la parte superior (justo debajo de la navbar de ~80px).
+ * Si estamos al final de la página, activa el último encabezado.
  */
 export function useScrollSpy(headings: HeadingNode[]): string | null {
   const [activeId, setActiveId] = useState<string | null>(null)
 
   useEffect(() => {
-    // Flatten de headings para buscar elementos
     const allHeadings = flattenHeadings(headings)
-    const elements = allHeadings
-      .map((h) => ({ id: h.id, element: document.getElementById(h.id) }))
-      .filter((h) => h.element !== null) as Array<{ id: string; element: HTMLElement }>
+    if (allHeadings.length === 0) return
 
-    if (elements.length === 0) return
+    const handleScroll = () => {
+      const navbar = 80 // altura navbar fija
+      const isAtBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 100
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Encuentra la entrada más visible (con mayor intersectionRatio)
-        const visible = entries.filter((e) => e.isIntersecting)
-        if (visible.length > 0) {
-          const mostVisible = visible.reduce((prev, current) =>
-            prev.intersectionRatio > current.intersectionRatio ? prev : current,
-          )
-          setActiveId(mostVisible.target.id)
+      // Si estamos al final, el último apartado es el activo
+      if (isAtBottom) {
+        setActiveId(allHeadings[allHeadings.length - 1].id)
+        return
+      }
+
+      // Busca el encabezado más cercano arriba (justo debajo de la navbar)
+      let closest: HeadingNode | null = null
+      let closestDistance = Infinity
+
+      for (const heading of allHeadings) {
+        const element = document.getElementById(heading.id)
+        if (!element) continue
+
+        const rect = element.getBoundingClientRect()
+        // Distancia desde la parte superior al elemento
+        const distance = rect.top - navbar
+
+        // Si está fuera de vista abajo, ignora
+        if (distance > window.innerHeight) continue
+
+        // Si está arriba de la navbar, es candidato (distancia negativa)
+        // Elegimos el más cercano a 0 (justo debajo de la navbar)
+        if (distance <= 0 && Math.abs(distance) < closestDistance) {
+          closest = heading
+          closestDistance = Math.abs(distance)
+        } else if (distance > 0 && distance < closestDistance) {
+          // Si nada está arriba, elegimos el que está más cerca abajo
+          closest = heading
+          closestDistance = distance
         }
-      },
-      { rootMargin: '-80px 0px -66% 0px' }, // Top margin para navbar fija
-    )
+      }
 
-    elements.forEach((h) => observer.observe(h.element))
+      if (closest) {
+        setActiveId(closest.id)
+      }
+    }
+
+    // Listener con passive flag para eficiencia
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    // Ejecuta una vez al montar
+    handleScroll()
 
     return () => {
-      elements.forEach((h) => observer.unobserve(h.element))
+      window.removeEventListener('scroll', handleScroll)
     }
   }, [headings])
 

@@ -1,12 +1,10 @@
-## 1. Qué es
+## 1. Descripción
 
-API REST sin frameworks para gestionar una biblioteca digital. Es un proyecto educativo para entender cómo funcionan HTTP realmente (métodos, rutas, códigos de estado, cabeceras, CORS) sin que un framework lo haga por mí. Después lo desplegué en un servidor Linux propio.
+API REST en Node.js sin frameworks para gestionar los libros de una biblioteca, con una página web que la consume. Tiene un modo demo que funciona sin servidor y también puede conectarse a la API real. Está desplegada en mi servidor Linux propio.
 
-**Stack**: Node.js (módulo http nativo), HTML/CSS/JavaScript, Caddy, systemd, Bash.
+### 1.1 Objetivo
 
-### 1.1 Por qué lo hice
-
-Programé el backend desde cero para aprender HTTP por dentro, incluida la validación de datos, gestión de errores y CORS. El frontend es una página con una "estantería" de libros que se puede filtrar o editar. Se puede usar en modo demo sin servidor, o conectada a la API real.
+Quería entender lo que un framework hace por mí: recibir peticiones HTTP, responder con códigos y cabeceras correctas, validar datos, gestionar errores y configurar CORS. Por eso lo programé desde cero.
 
 ## 2. Funcionalidades
 
@@ -18,13 +16,17 @@ Programé el backend desde cero para aprender HTTP por dentro, incluida la valid
 - Validación de datos: título y autor obligatorios, año entero que no sea futuro.
 - CORS configurado, incluidas las peticiones preflight.
 
-Los parámetros de `GET /books` se pueden combinar: `?genre=novela&available=true&sort=year&page=1&limit=5`.
+Los parámetros de `GET /books` se pueden combinar:
+
+```
+/books?genre=novela&available=true&sort=year&page=1&limit=5
+```
 
 ## 3. Endpoints
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `GET` | `/books` | Lista libros con filtros opcionales (disponibilidad, género, búsqueda, ordenación, paginación) |
+| `GET` | `/books` | Lista libros (admite filtros, búsqueda, orden y paginación) |
 | `POST` | `/books` | Crea un libro |
 | `PUT` | `/books/:id` | Reemplaza un libro completo |
 | `PATCH` | `/books/:id` | Modifica campos específicos |
@@ -42,35 +44,42 @@ biblioteca.pabloesquinas.es
         └── resto    →  archivos estáticos en /var/www/biblioteca
 ```
 
-El deploy es manual: cada vez que hago push a GitHub, ejecuto en el servidor:
+El despliegue es manual: cada vez que hago push a GitHub, ejecuto el script de despliegue en el servidor, que baja los cambios, copia el frontend, reinicia el servicio de la API y valida que responda.
 
-```bash
-bash /root/biblioteca-api/deploy.sh
+En desarrollo local, la página se abre desde otro puerto (Live Server en 5500) y hace peticiones a `localhost:3000`, así que el navegador envía una petición preflight (OPTIONS) para preguntar qué métodos están permitidos. Si no respondo con las cabeceras CORS correctas, el navegador bloquea la petición por política de mismo origen.
+
+Implementé CORS así:
+
+*`backend/server.js`*
+
+```javascript
+res.setHeader('Access-Control-Allow-Origin', '*');
+// ...
+if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.writeHead(204);
+    res.end();
+    return;
+}
 ```
 
-Este script automatiza: (1) baja los cambios (`git pull`), (2) copia el frontend a Caddy, (3) reinicia el servicio de la API, (4) valida que responda con `curl`.
+Establezco `Access-Control-Allow-Origin: *` globalmente para que todas las respuestas permitan peticiones desde cualquier origen. Para peticiones preflight (OPTIONS), respondo con 204 (sin contenido) y las cabeceras de métodos permitidos. En producción no hay preflight porque Caddy sirve el frontend y la API desde el mismo dominio (`biblioteca.pabloesquinas.es`).
 
-```bash
-# deploy.sh - Fragmento de validación
-# Tomado de deploy.sh líneas 25-31
-curl -s http://127.0.0.1:3001/books > /dev/null && \
-  echo "✓ API funcionando" || \
-  echo "✗ Error en la API"
-```
-
-## 5. Qué aprendí
+## 5. Aprendizajes
 
 - Cómo viaja una petición HTTP: método, ruta, parámetros, cabeceras, cuerpo.
 - Los códigos de estado correctos para cada situación (200, 201, 204, 400, 404).
-- Leer una petición en partes y convertir JSON con `JSON.parse`.
-- CORS: por qué el navegador envía `OPTIONS` antes de `POST`, y cómo responder.
-- Validar datos y proteger el servidor con `try`/`catch` básico.
+- Leer el cuerpo de una petición por partes y convertirlo con `JSON.parse`.
+- CORS: cuándo envía el navegador una petición preflight (OPTIONS) y cómo responderla.
+- Validar datos y proteger el servidor con `try`/`catch`.
 - Filtrar, ordenar y paginar una lista con métodos de arrays.
 - Desplegar en Linux: SSH, variables de entorno, systemd y Caddy como proxy inverso HTTPS.
 
-## 6. Próximos pasos
+## 6. Mejoras futuras
 
 - Guardar datos en una base de datos (SQLite o PostgreSQL) en lugar de memoria.
 - Separar el código en varios archivos (rutas, validación, modelos).
 - Añadir tests automáticos de los endpoints.
 - Automatizar el despliegue con GitHub Actions al hacer `push`.
+- Limitar CORS a los orígenes necesarios en lugar de `*`.
