@@ -1,10 +1,10 @@
 ## 1. Descripción
 
-Portfolio web personal: frontend en React con TypeScript, Vite y React Router, mostrando proyectos con búsqueda y filtros. Backend con Node.js y Express que maneja un formulario de contacto con validación, rate limiting y protección contra inyección de headers SMTP. Desplegado en un VPS Linux con Caddy como proxy inverso y systemd para gestionar el servicio de la API.
+Portfolio web personal: frontend en React con TypeScript, Vite y React Router, mostrando proyectos con búsqueda y filtros. Backend con Node.js y Express que maneja un formulario de contacto con validación, rate limiting y protección contra inyección de cabeceras SMTP. Desplegado en un VPS Linux con Caddy como proxy inverso y systemd para gestionar el servicio de la API.
 
 ### 1.1 Objetivo
 
-Demostrar habilidades full stack: arquitectura limpia en frontend (lazy loading de contenido Markdown, tabla de contenidos interactiva), API robusta (validación estricta, honeypot, rate limiting sin estado) y despliegue manual pero reproducible en producción.
+Practicar validación estricta en el servidor, prevención de ataques (inyección SMTP, honeypot), rate limiting por IP, y despliegue reproducible en un VPS usando systemd.
 
 ## 2. Funcionalidades
 
@@ -19,32 +19,40 @@ Demostrar habilidades full stack: arquitectura limpia en frontend (lazy loading 
 
 El backend valida en el servidor y protege contra abusos:
 
-**Validación:**
+*api/src/validate.js*
 
 ```javascript
-// De validate.js: bloquea inyección de headers SMTP
-const hasLineBreaks = (value) => /[\r\n]/.test(value);
-if (hasLineBreaks(name) || hasLineBreaks(subject)) {
-  return { valid: false, errors: { ... } };
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const LINE_BREAK = /[\r\n]/
+// ...
+for (const [field, { min, max }] of Object.entries(TEXT_RULES)) {
+  const value = typeof body[field] === 'string' ? body[field].trim() : ''
+  data[field] = value
+
+  if (value.length < min || value.length > max) {
+    errors[field] = `Debe tener entre ${min} y ${max} caracteres`
+  } else if (field !== 'message' && LINE_BREAK.test(value)) {
+    // Evita inyección de cabeceras SMTP a través de saltos de línea
+    errors[field] = 'No puede contener saltos de línea'
+  }
 }
-// También: longitudes (name 2-100, subject 3-150, message 10-5000, email max 254) y formato de email
 ```
 
-Rechaza inyecciones como `Bcc: spam@example.com` en el asunto.
+Detecta inyecciones como `Bcc: spam@example.com` en el asunto bloqueando saltos de línea (`\r\n`).
 
-**Honeypot**: Campo oculto `website`. Si está relleno, responde con éxito pero no envía nada (atrapa bots).
+**Honeypot**: Campo oculto `website`. Si está relleno, responde con éxito pero no envía nada. Responder OK al bot sin enviar nada evita que sepa que ha sido detectado.
 
 **Rate limit**: 5 envíos cada 15 minutos por IP. `express-rate-limit` con cabeceras estándar draft-7.
 
 **Seguridad HTTP**:
 - JSON body limitado a 10 KB
-- Errores SMTP ocultos al cliente (evita exposición de credenciales)
+- Los errores de SMTP no se muestran al cliente
 - `x-powered-by` desactivado
 - `trust proxy` para leer la IP real detrás de Caddy
 
 **Endpoint**: `POST /api/contact`. Validación fallida → 400. Rate limit → 429. Fallo SMTP → 500.
 
-**Tests** (7 escenarios): Node.js nativo (`node:test`). Cubre envío válido, validación fallida, inyección de headers, honeypot, error SMTP oculto, JSON malformado, rate limit.
+**Tests** (7 escenarios): Node.js nativo (`node:test`). Cubre envío válido, validación fallida, inyección de cabeceras, honeypot, error SMTP oculto, JSON malformado, rate limit.
 
 ## 4. Despliegue
 
@@ -59,7 +67,7 @@ Navegador → Caddy (pabloesquinas.es:443)
 
 Caddy maneja HTTPS (Let's Encrypt), redirecciona HTTP → HTTPS y hace reverse proxy de `/api`.
 
-**Pasos de `deploy.sh`** (manual, ejecutado desde local al servidor):
+**Pasos de `deploy.sh`** (que ejecuto en el servidor):
 
 1. `git pull --ff-only origin main` — actualiza sin merges automáticos
 2. `npm ci` — instala dependencias exactas del frontend
@@ -68,21 +76,18 @@ Caddy maneja HTTPS (Let's Encrypt), redirecciona HTTP → HTTPS y hace reverse p
 5. `npm ci --omit=dev` de la API — instala solo dependencias de producción
 6. `systemctl restart portfolio-api` — reinicia el servicio
 
-El servicio systemd `portfolio-api` carga el `.env` al arrancar y se reinicia automáticamente en caso de fallo.
+El servicio systemd `portfolio-api` carga las variables de entorno desde un fichero fuera del repo (`EnvironmentFile`) y se reinicia automáticamente en caso de fallo.
 
 ## 5. Aprendizajes
 
-- **Markdown en frontend**: Lazy loading con `react-markdown` reduce el tamaño inicial y acelera la navegación sin cargar contenido innecesario.
-- **Validación en servidor**: Nunca confiar en el cliente. Detectar inyección de headers antes de enviar correos es crítico.
-- **Scroll spy preciso**: `getBoundingClientRect()` con scroll listener detecta mejor qué heading está visible que `IntersectionObserver`, especialmente en TOC.
-- **Rate limit sin estado**: Basado solo en IP (sin sesiones), simple de implementar y eficaz contra bots en endpoints públicos.
-- **Honeypot silencioso**: Responder "OK" a bots sin enviar nada es más efectivo que rechazar, porque no revela si el sitio está activo.
+- **Markdown en frontend**: Lazy loading con `react-markdown` reduce el tamaño inicial sin cargar contenido innecesario.
+- **Validación en servidor**: Nunca confiar en el cliente. Detectar inyección de cabeceras antes de enviar correos es crítico.
+- **Scroll spy**: En mi caso, `getBoundingClientRect()` con un listener de scroll funcionó mejor que IntersectionObserver para resaltar el apartado activo.
+- **Rate limit en memoria**: `express-rate-limit` guarda los contadores en memoria: es sencillo, pero se reinicia al reiniciar el servicio y no se comparte entre instancias.
+- **Honeypot silencioso**: Responder OK al bot sin enviar nada evita que sepa que ha sido detectado.
 
 ## 6. Mejoras futuras
 
 - Automatizar el despliegue con GitHub Actions (eliminar manualidad, garantizar consistencia).
-- Tests del frontend (Vitest + Testing Library) para validar componentes en diferentes anchos.
-- Despliegue sin cortes (blue-green deployment) para actualizar la API sin interrumpir visitantes.
-- Monitoreo y métricas (Prometheus + Grafana) para alertar si la API cae o las peticiones se ralentizan.
-- CDN para estáticos (mejora latencia global, especialmente fuera de Europa).
-- Rate limit por usuario autenticado (permitir más envíos a usuarios que se registren, si se agrega autenticación).
+- Tests del frontend con Vitest y Testing Library.
+- Despliegue sin cortes para actualizar la API sin interrumpir visitantes.

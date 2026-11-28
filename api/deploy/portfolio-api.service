@@ -5,9 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# Carpeta de la API en el VPS (la ruta del repo clonado)
-WorkingDirectory=/root/portfolio/portfolio_pablo/api
-# Credenciales: el fichero que creamos en el VPS
+# Sustituir por la ruta donde está clonado el repo en el servidor
+WorkingDirectory=<RUTA_DEL_REPO>/api
+# Sustituir por la ruta del fichero con variables de entorno en el servidor
 EnvironmentFile=/etc/portfolio-api.env
 # Ruta absoluta de node en el VPS: sustituir por el resultado de `which node`
 ExecStart=/usr/bin/node src/server.js

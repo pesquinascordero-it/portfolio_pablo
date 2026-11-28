@@ -6,7 +6,7 @@ Portfolio web full stack de Pablo Esquinas: frontend en React y TypeScript, back
 
 - **Frontend:** React 19, TypeScript, Vite, React Router
 - **Backend:** Node.js (≥ 22), Express 5, Nodemailer, express-rate-limit
-- **Deployment:** Caddy (proxy + estáticos), systemd (servicio), rsync
+- **Despliegue:** Caddy (proxy + estáticos), systemd (servicio), rsync
 
 ## Estructura
 
@@ -16,24 +16,25 @@ portfolio_pablo/
 │   ├── src/
 │   │   ├── pages/          # Home, CV, Projects, ProjectDetail, Contact, 404
 │   │   ├── components/     # Layout, project detail components
-│   │   ├── content/        # Markdown files for each project
+│   │   ├── content/        # Archivos Markdown de cada proyecto
 │   │   ├── data/           # projects.ts, home.ts, cv.ts
-│   │   ├── utils/          # Markdown loader, validation
-│   │   └── hooks/          # useScrollSpy for TOC highlighting
-│   └── dist/               # Build output (deployed)
+│   │   ├── utils/          # Cargador de Markdown
+│   │   └── hooks/          # useScrollSpy para resaltado de TOC
+│   └── dist/               # Salida de compilación (desplegada)
 ├── api/                    # Backend (Express)
 │   ├── src/
-│   │   ├── server.js       # Listening on 127.0.0.1:3000
-│   │   ├── app.js          # Route handlers, rate limit, honeypot
-│   │   ├── validate.js     # Email validation, SMTP header injection prevention
-│   │   ├── mailer.js       # Nodemailer configuration
-│   │   ├── config.js       # Environment variable validation
-│   │   └── test/           # 7 test scenarios (no external dependencies)
-│   ├── .env.example        # Template for required variables
+│   │   ├── server.js       # Escucha en 127.0.0.1:3000
+│   │   ├── app.js          # Manejadores de rutas, rate limit, honeypot
+│   │   ├── validate.js     # Validación de email, prevención de inyección SMTP
+│   │   ├── mailer.js       # Configuración Nodemailer
+│   │   └── config.js       # Validación de variables de entorno
+│   ├── test/
+│   │   └── app.test.js     # 7 tests con node:test y mailer simulado
+│   ├── .env.example        # Plantilla de variables requeridas
 │   └── deploy/
-│       └── portfolio-api.service  # systemd service config
-├── deploy.sh               # Deployment script (manual)
-└── Caddyfile              # Web server config (in production)
+│       └── portfolio-api.service  # Configuración del servicio systemd
+├── deploy.sh               # Script de despliegue (manual)
+└── .gitignore             # Archivos ignorados por git
 ```
 
 ## Desarrollo local
@@ -80,9 +81,9 @@ npm test
 - Protección contra inyección de cabeceras SMTP (bloquea `\r\n` en nombre y asunto)
 - Honeypot para atrapar bots
 - Rate limit: 5 envíos cada 15 minutos por IP
-- Errores SMTP ocultos al cliente (evita exposición de credenciales)
+- Los errores de SMTP no se muestran al cliente
 - Cuerpo JSON limitado a 10 KB
-- Tests del 100% de los escenarios
+- 7 tests con `node:test` y un mailer simulado
 
 ## Despliegue
 
@@ -113,10 +114,9 @@ Caddy maneja HTTPS automático (Let's Encrypt), redirige HTTP a HTTPS y envía `
 
 ## Aprendizajes
 
-- Markdown renderizado en el frontend reduce solicitudes y acelera navegación
 - Validación estricta en el servidor es esencial (nunca confiar en el cliente)
 - El honeypot atrapa bots sin friccionar a usuarios reales
-- Rate limiting sin estado (basado en IP) es simple y efectivo
+- El rate limit de `express-rate-limit` guarda los contadores en memoria: es sencillo, pero se reinicia al reiniciar el servicio y no se comparte entre instancias
 - Lazy loading de componentes pesados reduce el bundle inicial
 - Scroll spy con `getBoundingClientRect()` es más preciso que IntersectionObserver para TOC
 
@@ -124,7 +124,4 @@ Caddy maneja HTTPS automático (Let's Encrypt), redirige HTTP a HTTPS y envía `
 
 - Automatizar el despliegue con GitHub Actions
 - Tests del frontend (Vitest + Testing Library)
-- Desplegar la API sin cortes (blue-green deployment)
-- Métricas y monitoreo (Prometheus, Grafana)
-- CDN para estáticos (mejora latencia global)
-- Incrementar el límite de rate limit para usuarios autenticados (reservado)
+- Desplegar la API sin cortes
